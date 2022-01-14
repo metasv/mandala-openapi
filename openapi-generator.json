@@ -1,0 +1,8 @@
+{
+  "basePackage": "com.metasv.gatling.simple.openapi",
+  "apiPackage": "com.metasv.gatling.simple.openapi.api",
+  "modelPackage": "com.metasv.gatling.simple.openapi.model",
+  "configPackage": "com.metasv.gatling.simple.openapi.config",
+  "invokerPackage": "com.metasv.gatling.simple.openapi",
+  "dateLibrary": "legacy"
+}

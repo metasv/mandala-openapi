@@ -1,0 +1,342 @@
+openapi: 3.0.3
+info:
+  title: Mandala Pool API Spec
+  description: API definition for Mandala provided apis
+  version: 2.0.0
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  contact:
+    email: heqiming@metasv.com
+    name: Mandala team
+
+servers:
+  - url: 'https://mandala-api.metasv.com'
+tags:
+  - name: user
+    description: 用户相关api
+  - name: wallet
+    description: 钱包相关api
+  - name: mine
+    description: 挖矿相关api
+
+paths:
+  /user/register:
+    post:
+      tags:
+        - user
+      summary: 新用户注册账号。
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '200':
+          description: 用户注册结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegisterResp'
+
+  /user/login:
+    post:
+      tags:
+        - user
+      summary: 用户登录，输入账号密码获取JWT
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: 登录成功，返回JWT，后续使用JWT调用接口
+          content:
+            application/json:
+              schema:
+                type: string
+        '403':
+          description: 登录失败，账号密码错误或者不存在
+
+  /user/info:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - user
+      summary: 获取当前用户信息，需要登录态（JWT）
+      responses:
+        '200':
+          description: 获取信息成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+        '403':
+          description: token无效
+
+  /wallet:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - wallet
+      summary: 获取用户钱包信息，此钱包用于接收挖矿收益以及提现
+      responses:
+        '200':
+          description: 获取钱包信息成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserWallet'
+        '403':
+          description: token无效
+
+  /wallet/transfer:
+    post:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - wallet
+      summary: 钱包余额提现
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WalletTransferRequest'
+      responses:
+        '201':
+          description: Broadcast success, txid returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResult'
+        '403':
+          description: Broadcast Failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BroadcastResult'
+
+  /mine/connect:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - mine
+      summary: 获取挖矿stratum链接
+      responses:
+        '200':
+          description: 返回挖矿链接成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiningConnection'
+        '403':
+          description: token无效
+
+  /mine/status:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - mine
+      summary: 获取当前挖矿状态
+      responses:
+        '200':
+          description: 返回实时状态成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MiningStatus'
+        '403':
+          description: token无效
+
+  /mine/payout:
+    get:
+      security:
+        - bearerAuth: [ ]
+      tags:
+        - mine
+      summary: 获取收益发放记录(每页最多100条记录）
+      parameters:
+        - name: flag
+          in: query
+          schema:
+            type: integer
+          description: 翻页记录，传上一次最后一条flag
+      responses:
+        '200':
+          description: 返回成功
+          content:
+            application/json:
+              schema:
+                type: array
+                maxItems: 100
+                items:
+                  $ref: '#/components/schemas/UserPayoutBill'
+
+components:
+  securitySchemes:
+    # arbitrary name for the security scheme
+    bearerAuth:
+      type: http
+      scheme: bearer
+      # optional, arbitrary value for documentation purposes
+      bearerFormat: JWT
+  schemas:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+    UserRegisterRequest:
+      type: object
+      description: 注册用户的请求
+      properties:
+        userName:
+          description: 注册使用的用户名，同时也是矿机提交share的用户名
+          type: string
+        mailAddress:
+          description: 用户注册的邮箱地址，用于发送消息以及找回账号
+          type: string
+        password:
+          description: 用户密码
+          type: string
+        passwordConfirm:
+          description: 密码再次确认
+    UserRegisterResp:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: 是否注册成功
+        message:
+          type: string
+          description: 注册失败后返回的信息
+
+    UserLoginRequest:
+      type: object
+      description: 用户登录请求
+      properties:
+        email:
+          description: 使用邮箱登录
+          type: string
+        password:
+          description: 用户密码
+          type: string
+
+    UserInfo:
+      type: object
+      description: 用户的详情信息
+      properties:
+        userName:
+          description: 用户名
+          type: string
+        email:
+          description: 用户邮箱
+
+    UserWallet:
+      type: object
+      description: 用户的钱包信息
+      properties:
+        address:
+          description: 钱包地址
+          type: string
+        balanceConfirmed:
+          description: 已确认钱包余额
+          type: integer
+          format: int64
+        balanceUnConfirmed:
+          description: 未确认钱包余额
+          type: integer
+          format: int64
+    WalletTransferRequest:
+      type: object
+      description: 请求提现钱包
+      properties:
+        targetAddress:
+          description: 提现目标地址
+          type: string
+        amount:
+          description: 提现金额（satoshi）
+          type: integer
+          format: int64
+        transferAll:
+          description: 是否提现全部金额，如果为true，无视amount
+          type: integer
+          format: int64
+
+    MiningConnection:
+      type: object
+      description: 获取矿池链接
+      properties:
+        stratumUrl:
+          description: 矿机链接路径
+          type: string
+        userName:
+          description: 矿机使用的用户名，格式 userName.ANYWORKER
+          type: string
+    MiningStatus:
+      type: object
+      description: 获取挖矿状态，包括实时算力等信息
+      properties:
+        userHashRate:
+          description: 当前用户的实时算力，单位GH/s
+          type: integer
+          format: int64
+        poolHashRate:
+          description: Mandala矿池实时算力，单位GH/s
+          type: integer
+          format: int64
+        networkHashRate:
+          description: 全网实时算力，单位GH/s
+          type: integer
+          format: int64
+    
+    BroadcastResult:
+      type: object
+      description: Broadcast result
+      properties:
+        txid:
+          description: return txid if broadcast success
+          type: string
+        message:
+          description: return messages if broadcast failed
+          type: string
+
+    UserPayoutBill:
+      type: object
+      description: 出块奖励发放
+      properties:
+        userName:
+          description: 用户名
+          type: string
+        height:
+          description: 出块高度
+          type: integer
+        blockHash:
+          description: 出块区块hash
+          type: string
+        state:
+          description: 奖励发放的状态，PENDING(0),PREMATURE(1),PROCESSING(2),SUCCESS(3),ORPHANED(99);
+          type: integer
+        lastShares:
+          description: 此轮总计数的share数量
+          type: integer
+        validShares:
+          description: 此用户在此轮中的数量
+          type: integer
+        totalPayoutValue:
+          description: 总回报数量（已扣除手续费）
+          type: integer
+          format: int64
+        payout:
+          description: 该用户的回报
+          type: integer
+          format: int64
+        userAddress:
+          description: 发放奖励的地址
+          type: string
+        payoutTxid:
+          description: 发放奖励的txid
+          type: string
+
