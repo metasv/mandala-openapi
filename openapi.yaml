@@ -12,6 +12,7 @@ info:
 
 servers:
   - url: 'https://mandala-api.metasv.com'
+  - url: 'https://mandala-api-prod.metasv.com'
 tags:
   - name: user
     description: 用户相关api
