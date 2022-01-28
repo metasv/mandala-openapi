@@ -12,7 +12,6 @@ info:
 
 servers:
   - url: 'https://mandala-api.metasv.com'
-  - url: 'https://mandala-api-prod.metasv.com'
 tags:
   - name: user
     description: 用户相关api
@@ -204,6 +203,7 @@ components:
           type: string
         passwordConfirm:
           description: 密码再次确认
+          type: string
     UserRegisterResp:
       type: object
       properties:
@@ -234,6 +234,7 @@ components:
           type: string
         email:
           description: 用户邮箱
+          type: string
 
     UserWallet:
       type: object
@@ -263,8 +264,7 @@ components:
           format: int64
         transferAll:
           description: 是否提现全部金额，如果为true，无视amount
-          type: integer
-          format: int64
+          type: boolean
 
     MiningConnection:
       type: object
