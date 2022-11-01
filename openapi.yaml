@@ -11,6 +11,8 @@ info:
     name: Mandala team
 
 servers:
+  - url: 'https://mandala-mvc-dev.metasv.com'
+  - url: 'https://mandala-mvc-prod.metasv.com'
   - url: 'https://mandala-api.metasv.com'
   - url: 'https://mandala-api-prod.metasv.com'
 tags:
